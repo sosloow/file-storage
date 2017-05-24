@@ -28,20 +28,20 @@ const DEBUG = config.debug;
 const VERBOSE = config.verbose;
 const port = config.port;
 const dir = path.resolve(process.cwd(), argv[0] || '.');
-const PID_FILE = path.resolve(process.cwd(), config.pidFile);
+// const PID_FILE = path.resolve(process.cwd(), config.pidFile);
 
-if (fs.existsSync(PID_FILE)) {
-    onError(`Pid file "${PID_FILE}" already exists`);
-}
+// if (fs.existsSync(PID_FILE)) {
+//     onError(`Pid file "${PID_FILE}" already exists`);
+// }
 
-fs.writeFileSync(PID_FILE, process.pid);
+// fs.writeFileSync(PID_FILE, process.pid);
 
-process.on('beforeExit', () => onExit);
-process.on('exit', () => onExit);
-process.on('SIGINT', () => {
-    onExit()
-    process.exit();
-});
+// process.on('beforeExit', () => onExit);
+// process.on('exit', () => onExit);
+// process.on('SIGINT', () => {
+//     onExit()
+//     process.exit();
+// });
 
 const storage = new FileStore({
     dataStore: new NedbDataStorage({
@@ -86,6 +86,6 @@ function onError(error) {
     process.exit(1);
 }
 
-function onExit() {
-    fs.existsSync(PID_FILE) && fs.unlinkSync(PID_FILE);
-}
+// function onExit() {
+//     fs.existsSync(PID_FILE) && fs.unlinkSync(PID_FILE);
+// }
