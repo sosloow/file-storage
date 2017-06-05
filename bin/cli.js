@@ -4,11 +4,12 @@
 
 const connect = require('connect');
 const hall = require('hall');
-const {middleware, FileStore, NedbDataStorage, FsBlobStorage} = require('..');
+const {middleware, FileStore, NedbDataStorage, MongodbDataStorage, FsBlobStorage} = require('..');
 const nedb = require('nedb');
 const argentum = require('argentum');
 const fs = require('fs');
 const path = require('path');
+const {MongoClient} = require('mongodb');
 
 const argv = process.argv.slice(2);
 const config = argentum.parse(argv, {
@@ -28,64 +29,57 @@ const DEBUG = config.debug;
 const VERBOSE = config.verbose;
 const port = config.port;
 const dir = path.resolve(process.cwd(), argv[0] || '.');
-// const PID_FILE = path.resolve(process.cwd(), config.pidFile);
 
-// if (fs.existsSync(PID_FILE)) {
-//     onError(`Pid file "${PID_FILE}" already exists`);
-// }
-
-// fs.writeFileSync(PID_FILE, process.pid);
-
-// process.on('beforeExit', () => onExit);
-// process.on('exit', () => onExit);
-// process.on('SIGINT', () => {
-//     onExit()
-//     process.exit();
-// });
-
-const storage = new FileStore({
-    dataStore: new NedbDataStorage({
-        db: new nedb({
-            filename: dir + '/files.db',
-            autoload: true,
-        }),
-    }),
-    blobStore: new FsBlobStorage({dir}),
+process.on('beforeExit', () => onExit);
+process.on('exit', () => onExit);
+process.on('SIGINT', () => {
+    onExit()
+    process.exit();
 });
 
-const router = hall();
-const logger = VERBOSE
-    ? console
-    : null;
+MongoClient.connect('mongodb://localhost:27017/filestorage').then((db) => {
+    const storage = new FileStore({
+        dataStore: new MongodbDataStorage({
+            db,
+            collection: 'files',
+        }),
+        blobStore: new FsBlobStorage({dir}),
+    });
 
-connect()
-.use((req, res, next) => {
-    VERBOSE && console.log(req.method, req.url);
-    next();
-})
-.use(middleware(router, storage, logger, DEBUG))
-.use((err, req, res, next) => {
-    if (! err) {
-        res.statusCode = 404;
-        res.statusText = 'Nothing found';
-        res.end();
-    }
-    else {
-        res.statusCode = 500;
-        res.statusText = 'Internal error';
-        res.end(err.message);
-        DEBUG && console.log(err);
-    }
-})
-.listen(port);
+    const router = hall();
+    const logger = VERBOSE
+        ? console
+        : null;
 
-VERBOSE && console.log('Listening on localhost:%s', port);
+    connect()
+    .use((req, res, next) => {
+        VERBOSE && console.log(req.method, req.url);
+        next();
+    })
+    .use(middleware(router, storage, logger, DEBUG))
+    .use((err, req, res, next) => {
+        if (! err) {
+            res.statusCode = 404;
+            res.statusText = 'Nothing found';
+            res.end();
+        }
+        else {
+            res.statusCode = 500;
+            res.statusText = 'Internal error';
+            res.end(err.message);
+            DEBUG && console.log(err);
+        }
+    })
+    .listen(port);
+
+    VERBOSE && console.log('Listening on localhost:%s', port);
+})
+.catch(onError);
 
 function onError(error) {
     console.error(error);
     process.exit(1);
 }
 
-// function onExit() {
-//     fs.existsSync(PID_FILE) && fs.unlinkSync(PID_FILE);
-// }
+function onExit() {
+}
