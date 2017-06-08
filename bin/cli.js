@@ -22,11 +22,13 @@ const config = argentum.parse(argv, {
         debug: process.env.DEBUG === '1',
         verbose: process.env.VERBOSE === '1',
         pidFile: process.env.PID_FILE || '/var/run/file-store.pid',
+        mongoUrl: process.env.MONGO_URL || 'mongodb://localhost:27017/filestorage',
     },
 });
 
 const DEBUG = config.debug;
 const VERBOSE = config.verbose;
+const MONGO_URL = config.mongoUrl;
 const port = config.port;
 const dir = path.resolve(process.cwd(), argv[0] || '.');
 
@@ -37,7 +39,9 @@ process.on('SIGINT', () => {
     process.exit();
 });
 
-MongoClient.connect('mongodb://localhost:27017/filestorage').then((db) => {
+console.log("MONGO_URL", MONGO_URL);
+
+MongoClient.connect(MONGO_URL).then((db) => {
     const storage = new FileStore({
         dataStore: new MongodbDataStorage({
             db,
