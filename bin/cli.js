@@ -39,8 +39,6 @@ process.on('SIGINT', () => {
     process.exit();
 });
 
-console.log("MONGO_URL", MONGO_URL);
-
 MongoClient.connect(MONGO_URL).then((db) => {
     const storage = new FileStore({
         dataStore: new MongodbDataStorage({
