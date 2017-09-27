@@ -1,0 +1,15 @@
+{
+  "apps": [{
+    "name": "file-storage",
+    "cwd": "/home/user/file-storage",
+    "script": "bin/cli.js",
+    "env": {
+      "NODE_ENV": "production",
+      "PORT": 4444,
+      "PID_FILE": "/home/user/file-storage/file-storage.pid",
+    },
+    "min_uptime": 2000,
+    "error_file": "log/file-storage.stderr.log",
+    "out_file": "log/file-storage.stdout.log",
+  }]
+}
