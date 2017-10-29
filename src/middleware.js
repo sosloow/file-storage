@@ -49,13 +49,13 @@ module.exports = function(router, filestore, logger, debug) {
 
                     const chunkSize = getRangeLength(range);
 
-                    res.statusCode = chunkSize === Number(meta.contentLength) ? 206 : 206;
+                    res.statusCode = 206;
                     res.setHeader('content-type', meta.contentType);
                     res.setHeader('content-length', chunkSize);
                     res.setHeader('content-range', `bytes ${range[0]}-${range[1]}/${Number(meta.contentLength)}`)
                     res.setHeader('accept-ranges', 'bytes');
                     // res.setHeader('content-md5', meta.md5);
-                    console.log(chunkSize, chunk.length);
+
                     if (meta.tags.length) {
                         res.setHeader('x-tags', meta.tags.join(', '));
                     }
