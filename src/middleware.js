@@ -2,8 +2,9 @@
 
 const _ = require('lodash');
 const url = require('url');
-const {promiseSeries} = require('../lib/utils.js');
+const {promiseSeries, getRange, getRangeLength} = require('../lib/utils.js');
 const zlib = require('zlib');
+const {PassThrough} = require('stream');
 
 module.exports = function(router, filestore, logger, debug) {
     const VERBOSE = !! logger;
@@ -28,6 +29,8 @@ module.exports = function(router, filestore, logger, debug) {
     router.get('/files/:id', (req, res, next) => {
         const id = req.params.id;
 
+        const range = getRange(req.headers['range']);
+
         filestore.has(id)
         .then((status) => {
             if (! status) {
@@ -35,6 +38,45 @@ module.exports = function(router, filestore, logger, debug) {
                 return;
             }
 
+            if (range) {
+                return filestore.get(id, range)
+                .then(([meta, chunk]) => {
+                    if (meta.isDeleted) {
+                        res.writeHead(403, 'Deleted');
+                        res.end();
+                        return;
+                    }
+
+                    const chunkSize = getRangeLength(range);
+
+                    res.statusCode = chunkSize === Number(meta.contentLength) ? 206 : 206;
+                    res.setHeader('content-type', meta.contentType);
+                    res.setHeader('content-length', chunkSize);
+                    res.setHeader('content-range', `bytes ${range[0]}-${range[1]}/${Number(meta.contentLength)}`)
+                    res.setHeader('accept-ranges', 'bytes');
+                    // res.setHeader('content-md5', meta.md5);
+                    console.log(chunkSize, chunk.length);
+                    if (meta.tags.length) {
+                        res.setHeader('x-tags', meta.tags.join(', '));
+                    }
+
+                    if (req.query.download) {
+                        res.setHeader(
+                            'content-disposition',
+                            `attachment; filename="${meta.name || id}"`
+                        );
+                    }
+
+                    VERBOSE && logger.log('Sent', id, 'Range', range);
+
+                    const stream = new PassThrough();
+                    stream.end(chunk);
+                    stream.pipe(res);
+
+                    filestore.setAccessDate(id, new Date())
+                    .catch((error) => DEBUG && console.error(error));
+                });
+            }
 
             return filestore.getStream(id)
             .then(([meta, stream]) => {

@@ -28,9 +28,22 @@ class FileStore {
         return this.dataStore.has(id);
     }
 
-    get(id) {
+    get(id, range) {
+        let meta;
+
         return this.getMeta(id)
-        .then((meta) => this.getBlob(meta.md5));
+        .then((data) => {
+            meta = data;
+
+            if (! Number.isFinite(range[1])) {
+                range[1] = Number(meta.contentLength) - 1;
+            }
+
+            return this.getBlob(meta.md5, range);
+        })
+        .then((blob) => {
+            return [meta, blob];
+        });
     }
 
     delete(id) {
@@ -68,9 +81,9 @@ class FileStore {
         return this.dataStore.setAccessDate(id, date);
     }
 
-    getStream(id) {
+    getStream(id, chunkSize) {
         return this.getMeta(id)
-        .then((meta) => this.getBlobStream(meta.md5)
+        .then((meta) => this.getBlobStream(meta.md5, chunkSize)
         .then((stream) => [meta, stream]));
     }
 
@@ -91,12 +104,12 @@ class FileStore {
         return this.dataStore.count(query, params);
     }
 
-    getBlob(id) {
-        return this.globStorage.get(id);
+    getBlob(id, range) {
+        return this.blobStore.get(id, range);
     }
 
-    getBlobStream(id) {
-        return this.blobStore.getStream(id);
+    getBlobStream(id, chunkSize) {
+        return this.blobStore.getStream(id, chunkSize);
     }
 
     listUpdated(date) {

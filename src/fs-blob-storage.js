@@ -11,6 +11,9 @@ const renameP = pify(fs.rename);
 const statP = pify(fs.stat);
 const {Readable} = require('stream');
 const uuid = require('node-uuid');
+const bluebird = require('bluebird');
+
+const {getRangeLength} = require('../lib/utils')
 
 class FsBlobStorage {
     constructor({dir = process.cwd(), tmp = '/tmp', depth = 3} = {}) {
@@ -57,10 +60,36 @@ class FsBlobStorage {
      * @param  {String} id Item id.
      * @return {Promise<Buffer,Error>} Returns item content with promise.
      */
-    get(id) {
+    get(id, range) {
         var filepath = this.getFilepath(id);
 
-        return readFileP(filepath);
+        const open = bluebird.promisify(fs.open);
+        const read = bluebird.promisify(fs.read);
+        const close = bluebird.promisify(fs.close);
+
+        const rangeLength = getRangeLength(range);
+        const buffer = new Buffer(rangeLength);
+
+        let file;
+        return existsP(filepath)
+        .then((exists) => {
+            if (! exists) {
+                throw new Error(`Item "${id}" not found`);
+            }
+
+            return open(filepath, 'r');
+        })
+        .then((data) => {
+            file = data;
+
+            return read(file, buffer, 0, rangeLength, range[0]);
+        })
+        .then(() => {
+            return close(file);
+        })
+        .then(() => {
+            return buffer;
+        });
     }
     /**
      * Put file as a stream.

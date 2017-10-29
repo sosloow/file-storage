@@ -34,6 +34,7 @@
   "homepage": "https://github.com/rumkin/filestorage#readme",
   "dependencies": {
     "argentum": "^0.6.0",
+    "bluebird": "^3.5.1",
     "connect": "^3.5.0",
     "hall": "^0.3.0",
     "lodash": "^4.16.1",
