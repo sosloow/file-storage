@@ -18,7 +18,7 @@ const config = argentum.parse(argv, {
         v: 'verbose',
     },
     defaults: {
-        port: process.env.PORT || 8080,
+        port: process.env.FILE_STORAGE_PORT || 8080,
         debug: process.env.DEBUG === '1',
         verbose: process.env.VERBOSE === '1',
         pidFile: process.env.PID_FILE || '/var/run/file-store.pid',
