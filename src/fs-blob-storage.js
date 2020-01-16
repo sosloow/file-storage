@@ -7,7 +7,7 @@ const mkdirpP = pify(mkdirp);
 const writeFileP = pify(fs.writeFile);
 const readFileP = pify(fs.readFile);
 const unlinkP = pify(fs.unlink);
-const renameP = pify(fs.rename);
+const copyFileP = pify(fs.copyFile);
 const statP = pify(fs.stat);
 const {Readable} = require('stream');
 const uuid = require('node-uuid');
@@ -97,7 +97,8 @@ class FsBlobStorage {
                     }
                     else {
                         return mkdirpP(path.dirname(filepath))
-                        .then(() => renameP(tmpFile, filepath));
+                        .then(() => copyFileP(tmpFile, filepath))
+                        .then(() => unlinkP(tmpFile));
                     }
                 })
                 .then(() => md5);
