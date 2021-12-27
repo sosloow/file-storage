@@ -52,7 +52,7 @@ class MongodbDataStorage {
             accessDate: null,
             tags: [],
         });
-        
+
         return this._insert(item).then(() => item);
     }
 

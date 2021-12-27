@@ -20,7 +20,7 @@ class FileStore {
         }
 
         return this.blobStore.put(content)
-        .then((md5) => Object.assign({}, meta, {md5}))
+        .then(({md5, byteCount}) => Object.assign({}, meta, {md5, contentLength: byteCount}))
         .then((meta) => this.dataStore.put(id, meta).then(() => meta));
     }
 
@@ -28,9 +28,22 @@ class FileStore {
         return this.dataStore.has(id);
     }
 
-    get(id) {
+    get(id, range) {
+        let meta;
+
         return this.getMeta(id)
-        .then((meta) => this.getBlob(meta.md5));
+        .then((data) => {
+            meta = data;
+
+            if (! Number.isFinite(range[1])) {
+                range[1] = Number(meta.contentLength) - 1;
+            }
+
+            return this.getBlob(meta.md5, range);
+        })
+        .then((blob) => {
+            return [meta, blob];
+        });
     }
 
     delete(id) {
@@ -91,8 +104,8 @@ class FileStore {
         return this.dataStore.count(query, params);
     }
 
-    getBlob(id) {
-        return this.globStorage.get(id);
+    getBlob(id, range) {
+        return this.blobStore.get(id, range);
     }
 
     getBlobStream(id) {

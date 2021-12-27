@@ -39,12 +39,18 @@ process.on('SIGINT', () => {
     process.exit();
 });
 
-MongoClient.connect(MONGO_URL).then((db) => {
+MongoClient.connect(MONGO_URL).then((connection) => {
     const storage = new FileStore({
         dataStore: new MongodbDataStorage({
-            db,
+            db: connection.db('filestorage'),
             collection: 'files',
         }),
+        // dataStore: new NedbDataStorage({
+        //     db: new nedb({
+        //         filename: dir + '/files.db',
+        //         autoload: true,
+        //     }),
+        // }),
         blobStore: new FsBlobStorage({dir}),
     });
 
