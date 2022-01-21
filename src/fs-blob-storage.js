@@ -10,10 +10,10 @@ const unlinkP = pify(fs.unlink);
 const copyFileP = pify(fs.copyFile);
 const statP = pify(fs.stat);
 const {Readable} = require('stream');
-const uuid = require('node-uuid');
+const uuid = require('uuid').v4;
 const bluebird = require('bluebird');
 
-const {getRangeLength} = require('../lib/utils')
+const {getRangeLength} = require('../lib/utils');
 
 class FsBlobStorage {
     constructor({dir = process.cwd(), tmp = '/tmp', depth = 3} = {}) {

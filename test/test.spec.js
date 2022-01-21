@@ -2,7 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const {middleware, FileStore, NedbDataStorage, FsBlobStorage} = require('..');
 const nedb = require('nedb');
-const uuid = require('node-uuid');
+const uuid = require('uuid').v4;
 const DEBUG = process.env.DEBUG === '1';
 
 describe('Filestore', () => {

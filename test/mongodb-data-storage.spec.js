@@ -3,7 +3,7 @@
 const {MongoClient} = require('mongodb');
 const {MongodbDataStorage} = require('..');
 const assert = require('assert');
-const uuid = require('node-uuid');
+const uuid = require('uuid').v4;
 
 describe('MongodbDataStorage', () => {
     var storage;

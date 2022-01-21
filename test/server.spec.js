@@ -5,7 +5,7 @@ const {middleware, FileStore, NedbDataStorage, FsBlobStorage} = require('..');
 const assert = require('assert');
 const nedb = require('nedb');
 const fetch = require('node-fetch');
-const uuid = require('node-uuid');
+const uuid = require('uuid').v4;
 const qs = require('querystring');
 const DEBUG = process.env.DEBUG === '1';
 

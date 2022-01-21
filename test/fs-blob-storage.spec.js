@@ -3,7 +3,6 @@
 const {FsBlobStorage} = require('..');
 const assert = require('assert');
 const fs = require('fs');
-const uuid = require('node-uuid');
 const {Readable} = require('stream');
 
 describe('FsBlobStorage', () => {

@@ -3,7 +3,7 @@
 const Datastore = require('nedb');
 const {NedbDataStorage} = require('..');
 const assert = require('assert');
-const uuid = require('node-uuid');
+const uuid = require('uuid').v4;
 
 describe('NedbDataStorage', () => {
     var storage;
