@@ -69,6 +69,7 @@ class FsBlobStorage {
         const close = bluebird.promisify(fs.close);
 
         const rangeLength = getRangeLength(range);
+
         const buffer = new Buffer(rangeLength);
 
         let file;

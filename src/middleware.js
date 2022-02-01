@@ -29,7 +29,8 @@ module.exports = function(router, filestore, logger, debug) {
     router.get('/files/:id', (req, res, next) => {
         const id = req.params.id;
 
-        const range = getRange(req.headers['range']);
+        const maxRange = 1024 * 1024;
+        const range = getRange(req.headers['range'], maxRange);
 
         filestore.has(id)
         .then((status) => {

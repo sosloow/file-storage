@@ -4,10 +4,8 @@
 
 const connect = require('connect');
 const hall = require('hall');
-const {middleware, FileStore, NedbDataStorage, MongodbDataStorage, FsBlobStorage} = require('..');
-const nedb = require('nedb');
+const {middleware, FileStore, MongodbDataStorage, FsBlobStorage} = require('..');
 const argentum = require('argentum');
-const fs = require('fs');
 const path = require('path');
 const {MongoClient} = require('mongodb');
 
@@ -35,7 +33,7 @@ const dir = path.resolve(process.cwd(), argv[0] || '.');
 process.on('beforeExit', () => onExit);
 process.on('exit', () => onExit);
 process.on('SIGINT', () => {
-    onExit()
+    onExit();
     process.exit();
 });
 

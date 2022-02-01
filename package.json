@@ -3,7 +3,7 @@
   "scripts": {
     "cov": "istanbul cover node_modules/mocha/bin/_mocha -- -u exports -t ${TIMEOUT:-2000} -R spec test/**.spec.js",
     "test": "mocha  -t ${TIMEOUT:-2000} test/**.spec.js",
-    "start": "./bin/cli.js --port=4444 data"
+    "start": "VERBOSE=1 DEBUG=1 ./bin/cli.js --port=4444 data"
   },
   "license": "MIT",
   "name": "filestore",
