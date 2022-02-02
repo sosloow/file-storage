@@ -81,10 +81,20 @@ class FileStore {
         return this.dataStore.setAccessDate(id, date);
     }
 
-    getStream(id) {
+    getStream(id, range) {
+        let meta;
+
         return this.getMeta(id)
-        .then((meta) => this.getBlobStream(meta.md5)
-        .then((stream) => [meta, stream]));
+        .then((data) => {
+            meta = data;
+
+            if (range && ! Number.isFinite(range[1])) {
+                range[1] = Number(meta.contentLength) - 1;
+            }
+
+            return this.getBlobStream(meta.md5, range);
+        })
+        .then((stream) => [meta, stream]);
     }
 
     getMeta(id) {
@@ -108,8 +118,8 @@ class FileStore {
         return this.blobStore.get(id, range);
     }
 
-    getBlobStream(id) {
-        return this.blobStore.getStream(id);
+    getBlobStream(id, range) {
+        return this.blobStore.getStream(id, range);
     }
 
     listUpdated(date) {

@@ -29,8 +29,7 @@ module.exports = function(router, filestore, logger, debug) {
     router.get('/files/:id', (req, res, next) => {
         const id = req.params.id;
 
-        const maxRange = 1024 * 1024;
-        const range = getRange(req.headers['range'], maxRange);
+        const range = getRange(req.headers['range']);
 
         filestore.has(id)
         .then((status) => {
@@ -40,8 +39,8 @@ module.exports = function(router, filestore, logger, debug) {
             }
 
             if (range) {
-                return filestore.get(id, range)
-                .then(([meta, chunk]) => {
+                return filestore.getStream(id, range)
+                .then(([meta, stream]) => {
                     if (meta.isDeleted) {
                         res.writeHead(403, 'Deleted');
                         res.end();
@@ -53,7 +52,10 @@ module.exports = function(router, filestore, logger, debug) {
                     res.statusCode = 206;
                     res.setHeader('content-type', meta.contentType);
                     res.setHeader('content-length', chunkSize);
-                    res.setHeader('content-range', `bytes ${range[0]}-${range[1]}/${Number(meta.contentLength)}`)
+                    res.setHeader(
+                        'content-range',
+                        `bytes ${range[0]}-${range[1]}/${Number(meta.contentLength)}`
+                    );
                     res.setHeader('accept-ranges', 'bytes');
                     // res.setHeader('content-md5', meta.md5);
 
@@ -70,8 +72,6 @@ module.exports = function(router, filestore, logger, debug) {
 
                     VERBOSE && logger.log('Sent', id, 'Range', range);
 
-                    const stream = new PassThrough();
-                    stream.end(chunk);
                     stream.pipe(res);
 
                     filestore.setAccessDate(id, new Date())

@@ -144,9 +144,10 @@ class FsBlobStorage {
      * Get file read stream.
      *
      * @param  {String} id Item id.
+     * @param  {Array} range of bytes of streamed files
      * @return {Promise}      Promise returning stram.
      */
-    getStream (id) {
+    getStream (id, range) {
         var filepath = this.getFilepath(id);
 
         return existsP(filepath)
@@ -155,7 +156,14 @@ class FsBlobStorage {
                 throw new Error(`Item "${id}" not found`);
             }
 
-            return fs.createReadStream(filepath);
+            const options = {};
+
+            if (range) {
+                options.start = range[0];
+                options.end = range[1];
+            }
+
+            return fs.createReadStream(filepath, options);
         });
     }
     /**
