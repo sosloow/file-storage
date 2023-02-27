@@ -26,90 +26,67 @@ module.exports = function(router, filestore, logger, debug) {
     });
 
     // Get file
-    router.get('/files/:id', (req, res, next) => {
+    router.get('/files/:id', async (req, res, next) => {
         const id = req.params.id;
 
-        const range = getRange(req.headers['range']);
+        const status = filestore.has(id);
+        if (! status) {
+            next();
+            return;
+        }
 
-        filestore.has(id)
-        .then((status) => {
-            if (! status) {
-                next();
-                return;
-            }
+        const meta = await filestore.getMeta(id);
+        if (meta.isDeleted) {
+            res.writeHead(403, 'Deleted');
+            res.end();
+            return;
+        }
 
-            if (range) {
-                return filestore.getStream(id, range)
-                .then(([meta, stream]) => {
-                    if (meta.isDeleted) {
-                        res.writeHead(403, 'Deleted');
-                        res.end();
-                        return;
-                    }
+        res.setHeader('content-type', meta.contentType);
+        res.setHeader('content-md5', meta.md5);
+        res.setHeader('accept-ranges', 'bytes');
+        if (meta.tags.length) {
+            res.setHeader('x-tags', meta.tags.join(', '));
+        }
 
-                    const chunkSize = getRangeLength(range);
+        if (req.query.download) {
+            res.setHeader(
+                'content-disposition',
+                `attachment; filename="${meta.name || id}"`
+            );
+        }
 
-                    res.statusCode = 206;
-                    res.setHeader('content-type', meta.contentType);
-                    res.setHeader('content-length', chunkSize);
-                    res.setHeader(
-                        'content-range',
-                        `bytes ${range[0]}-${range[1]}/${Number(meta.contentLength)}`
-                    );
-                    res.setHeader('accept-ranges', 'bytes');
-                    // res.setHeader('content-md5', meta.md5);
+        let stream;
+        if (req.headers['range']) {
+            const {start, end, contentLength} = getRange(
+                req.headers['range'],
+                Math.pow(2, 20),
+                meta.contentLength
+            );
 
-                    if (meta.tags.length) {
-                        res.setHeader('x-tags', meta.tags.join(', '));
-                    }
+            stream = await filestore.blobStore.getStream(meta.md5, [start, end]);
 
-                    if (req.query.download) {
-                        res.setHeader(
-                            'content-disposition',
-                            `attachment; filename="${meta.name || id}"`
-                        );
-                    }
+            res.statusCode = 206;
+            res.setHeader('content-length', contentLength);
+            res.setHeader(
+                'content-range',
+                `bytes ${start}-${end}/${meta.contentLength}`
+            );
 
-                    VERBOSE && logger.log('Sent', id, 'Range', range);
+            VERBOSE && logger.log('Sent', id, 'Range', [start,end]);
+        }
+        else {
+            const stream = await filestore.blobStore.getStream(meta.md5);
 
-                    stream.pipe(res);
+            res.setHeader('content-length', meta.contentLength);
 
-                    filestore.setAccessDate(id, new Date())
-                    .catch((error) => DEBUG && console.error(error));
-                });
-            }
+            VERBOSE && logger.log('Sent', id);
+        }
 
-            return filestore.getStream(id)
-            .then(([meta, stream]) => {
-                if (meta.isDeleted) {
-                    res.writeHead(403, 'Deleted');
-                    res.end();
-                    return;
-                }
+        stream.pipe(res);
 
-                res.setHeader('content-type', meta.contentType);
-                res.setHeader('content-length', meta.contentLength);
-                res.setHeader('content-md5', meta.md5);
-
-                if (meta.tags.length) {
-                    res.setHeader('x-tags', meta.tags.join(', '));
-                }
-
-                if (req.query.download) {
-                    res.setHeader(
-                        'content-disposition',
-                        `attachment; filename="${meta.name || id}"`
-                    );
-                }
-
-                VERBOSE && logger.log('Sent', id);
-                stream.pipe(res);
-
-                filestore.setAccessDate(id, new Date())
-                .catch((error) => DEBUG && console.error(error));
-            });
-        })
-        .catch(next);
+        filestore.setAccessDate(id, new Date())
+        .catch((error) => DEBUG && console.error(error));
     });
 
     // Get file status
