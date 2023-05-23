@@ -76,7 +76,7 @@ module.exports = function(router, filestore, logger, debug) {
             VERBOSE && logger.log('Sent', id, 'Range', [start,end]);
         }
         else {
-            const stream = await filestore.blobStore.getStream(meta.md5);
+            stream = await filestore.blobStore.getStream(meta.md5);
 
             res.setHeader('content-length', meta.contentLength);
 
