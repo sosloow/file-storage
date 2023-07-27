@@ -36,6 +36,11 @@ module.exports = function(router, filestore, logger, debug) {
         }
 
         const meta = await filestore.getMeta(id);
+        if (!meta) {
+            res.writeHead(404, 'Not found');
+            res.end();
+            return;
+        }
         if (meta.isDeleted) {
             res.writeHead(403, 'Deleted');
             res.end();
@@ -76,7 +81,13 @@ module.exports = function(router, filestore, logger, debug) {
             VERBOSE && logger.log('Sent', id, 'Range', [start,end]);
         }
         else {
-            stream = await filestore.blobStore.getStream(meta.md5);
+            try {
+                stream = await filestore.blobStore.getStream(meta.md5);
+            }
+            catch (error) {
+                next(error);
+                return;
+            }
 
             res.setHeader('content-length', meta.contentLength);
 
