@@ -62,7 +62,6 @@ class FileStore {
     }
 
     setDeleted(id) {
-        return this.dataStore.setDeleted(id);
         return this.getMeta(id)
         .then((meta) =>
             this.dataStore.setDeleted(id)
